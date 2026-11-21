@@ -3,9 +3,15 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docs/releases/v0.3.0-beta.1.md'
+      - 'custom_components/obsidian_mcp/**'
+      - 'docs/releases/**'
+      - 'hacs.json'
+      - 'README.md'
+      - '.github/workflows/obsidian-mcp-integration.yml'
   pull_request:
     paths:
+      - 'README.md'
+      - 'docs/releases/**'
       - 'custom_components/obsidian_mcp/**'
       - 'tests/obsidian_mcp_integration_smoke.py'
       - 'hacs.json'
@@ -80,37 +86,3 @@ jobs:
           name: livesync-ha-${{ matrix.arch }}
           path: livesync-ha-${{ matrix.arch }}.tar.gz*
           if-no-files-found: error
-
-  beta:
-    name: Publish v0.3.0-beta.1
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [smoke, hassfest, livesync]
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    concurrency:
-      group: obsidian-mcp-v0.3.0-beta.1
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: livesync-ha-*
-          path: assets
-          merge-multiple: true
-      - name: Publish tested prerelease and LiveSync assets
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          version=v0.3.0-beta.1
-          test "v$(jq -r .version custom_components/obsidian_mcp/manifest.json)" = "$version"
-          if gh release view "$version" >/dev/null 2>&1; then
-            exit 0
-          fi
-          for arch in amd64 arm64; do
-            (cd assets && sha256sum -c "livesync-ha-$arch.tar.gz.sha256")
-          done
-          gh release create "$version" assets/livesync-ha-*.tar.gz assets/livesync-ha-*.tar.gz.sha256 \
-            --target "$GITHUB_SHA" --prerelease --latest=false \
-            --title "Obsidian MCP v0.3.0-beta.1" --notes-file docs/releases/v0.3.0-beta.1.md
