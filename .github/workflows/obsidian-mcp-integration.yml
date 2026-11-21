@@ -94,7 +94,10 @@ jobs:
 
   release:
     name: Publish stable release
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.publish_stable
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      ((github.event_name == 'workflow_dispatch' && inputs.publish_stable) ||
+       (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release Obsidian MCP v')))
     needs: [smoke, hassfest, hacs, livesync]
     runs-on: ubuntu-latest
     timeout-minutes: 10
