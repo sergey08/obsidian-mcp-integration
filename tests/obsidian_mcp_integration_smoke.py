@@ -20,6 +20,7 @@ from homeassistant.setup import async_setup_component
 
 DOMAIN = "obsidian_mcp"
 TOKEN = "a-local-test-token-that-is-not-a-secret"
+PRIVATE_TOKEN = "a-distinct-private-test-token-with-32-characters"
 HEADERS = {"Accept": "application/json, text/event-stream"}
 INITIALIZE = {
     "protocolVersion": "2025-06-18",
@@ -45,11 +46,12 @@ async def call_tool(client, endpoint, name, arguments, headers=HEADERS):
     return payload["result"]
 
 
-async def smoke(config, port):
+async def smoke(config, port, private_port):
     hass = HomeAssistant(str(config))
     loader.async_setup(hass)
     hass.config.skip_pip = True
     endpoint = f"http://127.0.0.1:{port}/api/obsidian_mcp/mcp"
+    private_endpoint = f"http://127.0.0.1:{private_port}/mcp"
     ha_config = {"http": {"server_host": "127.0.0.1", "server_port": port}}
 
     try:
@@ -88,12 +90,50 @@ async def smoke(config, port):
             reconfigure = await hass.config_entries.flow.async_init(
                 DOMAIN, context={"source": "reconfigure", "entry_id": entry.entry_id}
             )
+            private_options = {
+                **values, "enable_private_mcp": True, "private_mcp_port": private_port,
+                "private_mcp_api_key": PRIVATE_TOKEN,
+            }
+            changed = await hass.config_entries.flow.async_configure(
+                reconfigure["flow_id"], private_options
+            )
+            assert changed["type"] is FlowResultType.ABORT, changed
+            await hass.async_block_till_done()
+            assert (await request(client, endpoint, "initialize", INITIALIZE))[0] == 404
+            private_auth = {**HEADERS, "Authorization": f"Bearer {PRIVATE_TOKEN}"}
+            assert (await request(client, private_endpoint, "initialize", INITIALIZE))[0] == 401
+            assert (await request(client, private_endpoint, "initialize", INITIALIZE, {
+                **HEADERS, "Authorization": f"Bearer {TOKEN}"
+            }))[0] == 401
+            assert (await request(client, private_endpoint, "initialize", INITIALIZE, {
+                **private_auth, "Origin": "https://example.org"
+            }))[0] == 403
+            current = entry.runtime_data
+            replies = await asyncio.gather(
+                request(client, current.url, "initialize", INITIALIZE),
+                request(client, private_endpoint, "initialize", INITIALIZE, private_auth),
+                request(client, private_endpoint, "initialize", INITIALIZE, private_auth),
+            )
+            assert all(code == 200 and reply["result"]["serverInfo"]["name"] == "Obsidian HA"
+                       for code, reply in replies), replies
+            assert not (await call_tool(client, private_endpoint, "write_note", {
+                "name": "Private.md", "content": "Shared note"
+            }, private_auth)).get("isError")
+            read = await call_tool(client, current.url, "read_note", {"name": "Private.md"})
+            assert read["content"][0]["text"] == "Shared note"
+
+            reconfigure = await hass.config_entries.flow.async_init(
+                DOMAIN, context={"source": "reconfigure", "entry_id": entry.entry_id}
+            )
             changed = await hass.config_entries.flow.async_configure(reconfigure["flow_id"], {
-                **values, "enable_remote_mcp": True, "remote_mcp_api_key": TOKEN
+                **private_options, "private_mcp_api_key": "",
+                "enable_remote_mcp": True, "remote_mcp_api_key": TOKEN,
             })
             assert changed["type"] is FlowResultType.ABORT, changed
             await hass.async_block_till_done()
-            assert runtime.url is None and entry.runtime_data.url
+            assert runtime.url is None and current.url is None and entry.runtime_data.url
+            assert (await request(client, private_endpoint, "initialize", INITIALIZE, private_auth))[0] == 200
+            assert (await request(client, endpoint, "initialize", INITIALIZE, private_auth))[0] == 401
 
             assert (await request(client, endpoint, "initialize", INITIALIZE))[0] == 401
             assert (await request(client, endpoint, "initialize", INITIALIZE, {
@@ -150,5 +190,8 @@ if __name__ == "__main__":
         with socket.socket() as listener:
             listener.bind(("127.0.0.1", 0))
             port = listener.getsockname()[1]
-        asyncio.run(smoke(config, port))
+            with socket.socket() as private_listener:
+                private_listener.bind(("127.0.0.1", 0))
+                private_port = private_listener.getsockname()[1]
+        asyncio.run(smoke(config, port, private_port))
         print("Obsidian MCP integration smoke test passed.")

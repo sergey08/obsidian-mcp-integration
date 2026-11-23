@@ -1,6 +1,7 @@
 """MCP transport and optional LiveSync and secure tunnel processes."""
 
 import asyncio
+from hmac import compare_digest
 from contextlib import AsyncExitStack, contextmanager
 from dataclasses import dataclass
 import logging
@@ -10,7 +11,9 @@ import socket
 
 from aiohttp import ClientSession, DummyCookieJar
 import uvicorn
+from starlette.responses import Response
 
+from .const import PRIVATE_MCP_PORT
 from .server import create_app
 from .vault_selection import select_storage
 
@@ -49,6 +52,13 @@ class Storage:
         if sync:
             require_file(base / "bin/livesync-cli", executable=True)
             require_file(base / "settings/livesync-operativo.json")
+        if options.get("enable_private_mcp"):
+            port = options.get("private_mcp_port", PRIVATE_MCP_PORT)
+            token = options.get("private_mcp_api_key", "")
+            if type(port) is not int or not 1024 <= port <= 65535:
+                raise ValueError("Private MCP port must be between 1024 and 65535")
+            if len(token) < 32 or any(not 33 <= ord(char) <= 126 for char in token):
+                raise ValueError("Private MCP requires a token of 32 or more printable ASCII characters without spaces")
         if options.get("enable_tunnel"):
             if not options.get("tunnel_id", "").strip().startswith("tunnel_"):
                 raise ValueError("Missing tunnel ID")
@@ -74,6 +84,27 @@ class LoopbackServer(uvicorn.Server):
     @contextmanager
     def capture_signals(self):
         yield
+
+
+def protect_private_listener(app, private_port: int, token: str):
+    """Authenticate requests to the opt-in port before dispatching to MCP."""
+    expected = token.encode("ascii")
+
+    async def authenticated(scope, receive, send):
+        if scope["type"] == "http" and scope["server"][1] == private_port:
+            headers = dict(scope["headers"])
+            if b"origin" in headers:
+                await Response(status_code=403)(scope, receive, send)
+                return
+            scheme, _, supplied = headers.get(b"authorization", b"").partition(b" ")
+            if scheme.lower() != b"bearer" or not compare_digest(supplied, expected):
+                await Response(
+                    status_code=401, headers={"WWW-Authenticate": 'Bearer realm="Obsidian MCP"'}
+                )(scope, receive, send)
+                return
+        await app(scope, receive, send)
+
+    return authenticated
 
 
 class Runtime:
@@ -120,11 +151,16 @@ class Runtime:
             raise
 
     async def _start_mcp(self) -> None:
-        sock = socket.socket()
-        self.resources.callback(sock.close)
-        sock.bind(("127.0.0.1", 0))
-        sock.setblocking(False)
+        sockets = []
+        private_port = None
+        if self.options.get("enable_private_mcp"):
+            private_port = self.options.get("private_mcp_port", PRIVATE_MCP_PORT)
+            sockets.append(self._bind_loopback(private_port))
+        sock = self._bind_loopback(0)
+        sockets.append(sock)
         app = create_app(self.storage.vault, self.storage.trash)
+        if private_port is not None:
+            app = protect_private_listener(app, private_port, self.options["private_mcp_api_key"])
         server = LoopbackServer(uvicorn.Config(
             app,
             lifespan="on",
@@ -135,7 +171,7 @@ class Runtime:
             proxy_headers=False,
             timeout_graceful_shutdown=5,
         ))
-        task = asyncio.create_task(server.serve(sockets=[sock]))
+        task = asyncio.create_task(server.serve(sockets=sockets))
 
         async def shutdown():
             server.should_exit = True
@@ -155,6 +191,14 @@ class Runtime:
                     raise RuntimeError("MCP listener stopped before startup")
                 await asyncio.sleep(0.05)
         self.url = f"http://127.0.0.1:{sock.getsockname()[1]}/mcp"
+
+    def _bind_loopback(self, port: int) -> socket.socket:
+        sock = socket.socket()
+        self.resources.callback(sock.close)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(("127.0.0.1", port))
+        sock.setblocking(False)
+        return sock
 
     async def _start_process(self, name: str, *argv: str, env=None) -> None:
         # Do not pass Supervisor credentials or other HA-specific secrets to children.
