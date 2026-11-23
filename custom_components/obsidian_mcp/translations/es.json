@@ -13,12 +13,15 @@
           "enable_tunnel": "Activar el túnel privado de OpenAI",
           "tunnel_id": "ID del túnel de OpenAI",
           "enable_remote_mcp": "Activar MCP remoto autenticado",
-          "remote_mcp_api_key": "Token Bearer (32 caracteres o más)"
+          "remote_mcp_api_key": "Token Bearer (32 caracteres o más)",
+          "enable_private_mcp": "Activar MCP privado en la interfaz local",
+          "private_mcp_port": "Puerto local para el MCP privado",
+          "private_mcp_api_key": "Token Bearer privado (32 caracteres o más)"
         }
       },
       "reconfigure": {
         "title": "Reconfigurar Obsidian MCP",
-        "description": "Deja el token en blanco para conservar el actual mientras el acceso remoto esté habilitado. {detail}",
+        "description": "Deja cualquiera de los tokens en blanco para conservarlo mientras su acceso siga activado. {detail}",
         "data": {
           "storage_mode": "Modo de almacenamiento",
           "vault_path": "Bóveda local existente dentro de /share",
@@ -28,7 +31,10 @@
           "enable_tunnel": "Activar el túnel privado de OpenAI",
           "tunnel_id": "ID del túnel de OpenAI",
           "enable_remote_mcp": "Activar MCP remoto autenticado",
-          "remote_mcp_api_key": "Token Bearer (32 caracteres o más)"
+          "remote_mcp_api_key": "Token Bearer (32 caracteres o más)",
+          "enable_private_mcp": "Activar MCP privado en la interfaz local",
+          "private_mcp_port": "Puerto local para el MCP privado",
+          "private_mcp_api_key": "Token Bearer privado (32 caracteres o más)"
         }
       }
     },

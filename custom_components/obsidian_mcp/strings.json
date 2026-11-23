@@ -13,12 +13,15 @@
           "enable_tunnel": "Enable the private OpenAI tunnel",
           "tunnel_id": "OpenAI tunnel ID",
           "enable_remote_mcp": "Enable authenticated remote MCP",
-          "remote_mcp_api_key": "Remote Bearer token (32 characters or more)"
+          "remote_mcp_api_key": "Remote Bearer token (32 characters or more)",
+          "enable_private_mcp": "Enable private loopback MCP",
+          "private_mcp_port": "Private MCP loopback port",
+          "private_mcp_api_key": "Private Bearer token (32 characters or more)"
         }
       },
       "reconfigure": {
         "title": "Reconfigure Obsidian MCP",
-        "description": "Leave the token blank to retain the current token while remote access is enabled. {detail}",
+        "description": "Leave either token blank to retain it while its access option stays enabled. {detail}",
         "data": {
           "storage_mode": "Storage mode",
           "vault_path": "Existing local vault under /share",
@@ -28,7 +31,10 @@
           "enable_tunnel": "Enable the private OpenAI tunnel",
           "tunnel_id": "OpenAI tunnel ID",
           "enable_remote_mcp": "Enable authenticated remote MCP",
-          "remote_mcp_api_key": "Remote Bearer token (32 characters or more)"
+          "remote_mcp_api_key": "Remote Bearer token (32 characters or more)",
+          "enable_private_mcp": "Enable private loopback MCP",
+          "private_mcp_port": "Private MCP loopback port",
+          "private_mcp_api_key": "Private Bearer token (32 characters or more)"
         }
       }
     },

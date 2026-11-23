@@ -4,7 +4,7 @@
 
 ## English
 
-Read, search and edit Markdown notes in your Obsidian vault from ChatGPT or another compatible MCP client. The integration runs in Home Assistant Core. The current release is **v0.3.0**.
+Read, search and edit Markdown notes in your Obsidian vault from ChatGPT or another compatible MCP client. The integration runs in Home Assistant Core. The current stable release is **v0.3.0**. Private loopback access is available in **v0.3.1-beta.1**.
 
 ### Choose how Home Assistant sees your vault
 
@@ -43,6 +43,18 @@ A folder on your phone or PC is only usable in local mode if Home Assistant can 
 - **Other Streamable HTTP clients.** In **Reconfigure**, enable **Authenticated remote MCP** and provide a unique, random Bearer token of at least 32 characters. Connect the client to `https://<your-ha-host>/api/obsidian_mcp/mcp` over trusted HTTPS with `Authorization: Bearer <token>`. Leave this option off if you only use the OpenAI tunnel. With remote MCP enabled, leaving the token field blank in **Reconfigure** retains the current token.
 - The nine tools cover listing, searching, reading, reading with revision, obtaining a revision, writing, appending, renaming and deleting. Deleted notes go to recoverable private trash under `/config/obsidian_mcp/mcp-trash`.
 
+### Private MCP for Claude Desktop and Grok Build (beta)
+
+Enable **Private loopback MCP** in **Reconfigure** and enter a dedicated random Bearer token of at least 32 printable ASCII characters without spaces. The port defaults to **18765**. This listener binds to Home Assistant's `127.0.0.1`; it can run alongside the OpenAI tunnel. Leave **Authenticated remote MCP** disabled for this setup to keep the Home Assistant HTTPS route closed.
+
+From a computer on your home network, use a trusted SSH server that can reach the Home Assistant host loopback. The [Advanced SSH & Web Terminal app](https://github.com/hassio-addons/app-ssh) uses host networking and supports TCP forwarding. Use an SSH key and a LAN-only SSH connection. Forward the port from the computer running Claude Desktop or Grok Build:
+
+```sh
+ssh -N -L 127.0.0.1:18765:127.0.0.1:18765 <ssh-user>@<home-assistant-lan-host>
+```
+
+With the SSH session open, use `http://127.0.0.1:18765/mcp` and the `Authorization: Bearer <token>` header. Configure Grok Build with its Streamable HTTP transport. For Claude Desktop, configure a local stdio-to-Streamable HTTP bridge such as [mcp-remote](https://github.com/geelen/mcp-remote) with the same URL and header. Keep the token out of shared config, shell history and logs. For the initial trial, use a disposable vault because an authenticated client can edit and delete notes.
+
 ### Configure, troubleshoot and recover
 
 | Configure menu | When to use it |
@@ -64,7 +76,7 @@ If a note fails to sync, confirm the active vault path and LiveSync status, chec
 
 ## Español
 
-Lee, busca y edita notas Markdown de tu bóveda de Obsidian desde ChatGPT u otro cliente MCP compatible. La integración se ejecuta dentro de Home Assistant Core. La versión actual es **v0.3.0**.
+Lee, busca y edita notas Markdown de tu bóveda de Obsidian desde ChatGPT u otro cliente MCP compatible. La integración se ejecuta dentro de Home Assistant Core. La versión estable actual es **v0.3.0**. El acceso privado local está disponible en **v0.3.1-beta.1**.
 
 ### Elige cómo accede Home Assistant a tu bóveda
 
@@ -102,6 +114,18 @@ Una carpeta del móvil o del PC solo sirve en modo local si Home Assistant puede
 - **ChatGPT.** Crea o reutiliza un [túnel privado de OpenAI](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels) en tu organización de OpenAI Platform y consigue su ID y una clave de ejecución autorizada para ese túnel. Descarga un ejecutable verificado y compatible con tu plataforma de las [releases oficiales de tunnel-client](https://github.com/openai/tunnel-client/releases). Colócalo en `/config/obsidian_mcp/tunnel/bin/tunnel-client` y dale permiso de ejecución. Guarda la clave en **Configurar → Guardar la clave del túnel de OpenAI**. En **Reconfigurar**, indica el ID y activa el túnel. Selecciona ese túnel al configurar la app MCP personalizada de tu espacio de ChatGPT, si esta opción está disponible. Prueba a listar las notas. El túnel usa una conexión saliente y un servidor MCP local privado.
 - **Otros clientes Streamable HTTP.** En **Reconfigurar**, activa **MCP remoto autenticado** y proporciona un token Bearer aleatorio y exclusivo de al menos 32 caracteres. Configura el cliente con `https://<tu-host-ha>/api/obsidian_mcp/mcp` sobre HTTPS de confianza y la cabecera `Authorization: Bearer <token>`. Deja esta opción desactivada si solo usas el túnel de OpenAI. Con MCP remoto activo, dejar en blanco el token en **Reconfigurar** conserva el valor guardado.
 - Las nueve herramientas permiten listar, buscar, leer, leer con revisión, obtener una revisión, escribir, añadir texto, renombrar y borrar. Las notas borradas se conservan en la papelera privada recuperable de `/config/obsidian_mcp/mcp-trash`.
+
+### MCP privado para Claude Desktop y Grok Build (beta)
+
+En **Reconfigurar**, activa **MCP privado en la interfaz local** e introduce un token Bearer aleatorio y exclusivo de al menos 32 caracteres ASCII imprimibles sin espacios. El puerto predeterminado es **18765**. Este acceso escucha en `127.0.0.1` en Home Assistant y puede funcionar junto al túnel de OpenAI. Deja **MCP remoto autenticado** desactivado para mantener cerrada la ruta HTTPS de Home Assistant.
+
+Desde un ordenador de tu red doméstica, utiliza un servidor SSH de confianza que pueda acceder a la interfaz local del host de Home Assistant. La [aplicación Advanced SSH & Web Terminal](https://github.com/hassio-addons/app-ssh) usa la red del host y admite el reenvío TCP. Usa una clave SSH y una conexión SSH limitada a la red doméstica. Reenvía el puerto desde el ordenador en el que ejecutarás Claude Desktop o Grok Build:
+
+```sh
+ssh -N -L 127.0.0.1:18765:127.0.0.1:18765 <usuario-ssh>@<host-lan-home-assistant>
+```
+
+Con la sesión SSH abierta, usa `http://127.0.0.1:18765/mcp` y la cabecera `Authorization: Bearer <token>`. Configura Grok Build con el transporte Streamable HTTP. Para Claude Desktop, configura un puente local de stdio a Streamable HTTP, como [mcp-remote](https://github.com/geelen/mcp-remote), con la misma URL y cabecera. Mantén el token fuera de la configuración compartida, del historial del terminal y de los registros. Para la primera prueba, usa una bóveda temporal, ya que un cliente autenticado puede editar y borrar notas.
 
 ### Menús, diagnóstico y recuperación
 

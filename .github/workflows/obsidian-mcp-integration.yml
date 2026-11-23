@@ -1,9 +1,10 @@
 name: Obsidian MCP integration
 on:
   push:
-    branches: [main]
+    branches: [main, 'beta/*']
     paths:
       - 'custom_components/obsidian_mcp/**'
+      - 'tests/obsidian_mcp_integration_smoke.py'
       - 'docs/releases/**'
       - 'hacs.json'
       - 'README.md'
@@ -130,3 +131,37 @@ jobs:
           done
           gh release create "$version" assets/livesync-ha-*.tar.gz assets/livesync-ha-*.tar.gz.sha256 \
             --target "$GITHUB_SHA" --latest --title "Obsidian MCP $version" --notes-file "$notes"
+
+  prerelease:
+    name: Publish beta
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/beta/')
+    needs: [smoke, hassfest, hacs, livesync]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: obsidian-mcp-beta-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: livesync-ha-*
+          path: assets
+          merge-multiple: true
+      - name: Publish the beta and verified artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          manifest_version=$(jq -er .version custom_components/obsidian_mcp/manifest.json)
+          [[ "$manifest_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$ ]]
+          [[ "$GITHUB_REF_NAME" == "beta/$manifest_version" ]]
+          version="v$manifest_version"
+          notes="docs/releases/$version.md"
+          test -s "$notes"
+          for arch in amd64 arm64; do
+            (cd assets && sha256sum -c "livesync-ha-$arch.tar.gz.sha256")
+          done
+          gh release create "$version" assets/livesync-ha-*.tar.gz assets/livesync-ha-*.tar.gz.sha256 \
+            --target "$GITHUB_SHA" --prerelease --latest=false --title "Obsidian MCP $version" --notes-file "$notes"

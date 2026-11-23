@@ -9,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
 from homeassistant.core import callback
 from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, TextSelectorType
 
-from .const import DOMAIN
+from .const import DOMAIN, PRIVATE_MCP_PORT
 from .couchdb_check import CouchCheckError, check_couchdb
 from .runtime import Storage
 from .settings_import import SettingsImportError, import_settings_json
@@ -43,16 +43,18 @@ class ObsidianConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
         message = ""
         values = current if user_input is None else user_input
-        key = current.get("remote_mcp_api_key", "")
         if user_input is not None:
             submitted = dict(user_input)
             for field in ("vault_path", "livesync_shared_vault_path", "tunnel_id"):
                 submitted[field] = submitted.get(field, "").strip()
-            submitted["remote_mcp_api_key"] = (
-                submitted.get("remote_mcp_api_key", "").strip() or key
-                if submitted.get("enable_remote_mcp")
-                else ""
-            )
+            for enabled, field in (
+                ("enable_remote_mcp", "remote_mcp_api_key"),
+                ("enable_private_mcp", "private_mcp_api_key"),
+            ):
+                submitted[field] = (
+                    submitted.get(field, "").strip() or current.get(field, "")
+                    if submitted.get(enabled) else ""
+                )
             try:
                 await self.hass.async_add_executor_job(
                     Storage.check, Path(self.hass.config.path(DOMAIN)), submitted
@@ -80,6 +82,10 @@ class ObsidianConfigFlow(ConfigFlow, domain=DOMAIN):
             vol.Optional("tunnel_id", description={"suggested_value": values.get("tunnel_id", "")}): str,
             vol.Required("enable_remote_mcp", default=values.get("enable_remote_mcp", False)): bool,
             vol.Optional("remote_mcp_api_key"): PASSWORD,
+            vol.Required("enable_private_mcp", default=values.get("enable_private_mcp", False)): bool,
+            vol.Required("private_mcp_port", default=values.get("private_mcp_port", PRIVATE_MCP_PORT)):
+                vol.All(vol.Coerce(int), vol.Range(min=1024, max=65535)),
+            vol.Optional("private_mcp_api_key"): PASSWORD,
         })
         return self.async_show_form(
             step_id=step,
