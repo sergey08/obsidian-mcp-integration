@@ -17,7 +17,9 @@ A folder on your phone or PC is only usable in local mode if Home Assistant can 
 
 ### Install and set up
 
-1. In **HACS / Marketplace → Custom repositories**, add [this repository](https://github.com/sergey08/obsidian-mcp-integration) as **Integration**. Open **Obsidian MCP**, download **v0.3.0**, and restart Home Assistant if prompted. Requires Home Assistant **2026.9.0 or later**.
+1. Open **HACS / Marketplace**, search for **Obsidian MCP**, and download the integration from the catalog. Restart Home Assistant if prompted. Requires Home Assistant **2026.9.0 or later**.
+
+   **Alternative (custom repository):** If the integration does not appear in the catalog yet, open **HACS / Marketplace → Custom repositories**, add [this repository](https://github.com/sergey08/obsidian-mcp-integration) as **Integration**, then search for **Obsidian MCP** and download it.
 2. Open **Settings → Devices & services → Add integration → Obsidian MCP**. Choose a mode from the table and leave the OpenAI tunnel and remote MCP disabled until you have configured them.
 3. For **local** mode, create or mount the folder under `/share` first, make it writable by Home Assistant Core, and enter its path in **Local vault**. For **LiveSync** mode, start with both path fields empty and LiveSync disabled, then follow the setup below.
 4. Open **Configure** to import credentials or run checks. Open **Reconfigure** in the integration's menu to change paths, enable services or set the tunnel ID.
@@ -77,7 +79,9 @@ Una carpeta del móvil o del PC solo sirve en modo local si Home Assistant puede
 
 ### Instala y configura la integración
 
-1. En **HACS / Marketplace → Repositorios personalizados**, añade [este repositorio](https://github.com/sergey08/obsidian-mcp-integration) como **Integración**. Abre **Obsidian MCP**, descarga **v0.3.0** y reinicia Home Assistant si te lo pide. Requiere Home Assistant **2026.9.0 o posterior**.
+1. Abre **HACS / Marketplace**, busca **Obsidian MCP** y descarga la integración desde el catálogo. Reinicia Home Assistant si te lo pide. Requiere Home Assistant **2026.9.0 o posterior**.
+
+   **Alternativa (repositorio personalizado):** Si la integración aún no aparece en el catálogo, abre **HACS / Marketplace → Repositorios personalizados**, añade [este repositorio](https://github.com/sergey08/obsidian-mcp-integration) como **Integración**, busca **Obsidian MCP** y descárgala.
 2. Ve a **Ajustes → Dispositivos y servicios → Añadir integración → Obsidian MCP**. Elige un modo de la tabla y deja el túnel de OpenAI y el acceso MCP remoto desactivados hasta configurarlos.
 3. En modo **local**, crea o monta antes la carpeta en `/share`, da permiso de escritura a Home Assistant Core y pon su ruta en **Bóveda local**. En modo **LiveSync**, empieza con ambas rutas vacías y LiveSync desactivado. Sigue los pasos del apartado siguiente.
 4. Usa **Configurar** para importar credenciales o ejecutar comprobaciones. Usa **Reconfigurar**, en el menú de la integración, para cambiar las rutas, activar servicios o indicar el ID del túnel.
