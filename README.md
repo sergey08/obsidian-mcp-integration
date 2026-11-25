@@ -4,7 +4,9 @@
 
 ## English
 
-Read, search and edit Markdown notes in your Obsidian vault from ChatGPT or another compatible MCP client. The integration runs in Home Assistant Core. The current release is **v0.3.0**.
+Read, search and edit Markdown notes in your Obsidian vault from ChatGPT or another compatible MCP client. The integration runs in Home Assistant Core. The current stable release is **v0.3.0**.
+
+[Preview v0.3.1-beta.2](docs/releases/v0.3.1-beta.2.md) adds behavior annotations to the nine MCP tools. To try it, enable beta versions in HACS and select this release.
 
 ### Choose how Home Assistant sees your vault
 
@@ -66,7 +68,9 @@ If a note fails to sync, confirm the active vault path and LiveSync status, chec
 
 ## Español
 
-Lee, busca y edita notas Markdown de tu bóveda de Obsidian desde ChatGPT u otro cliente MCP compatible. La integración se ejecuta dentro de Home Assistant Core. La versión actual es **v0.3.0**.
+Lee, busca y edita notas Markdown de tu bóveda de Obsidian desde ChatGPT u otro cliente MCP compatible. La integración se ejecuta dentro de Home Assistant Core. La versión estable actual es **v0.3.0**.
+
+[La beta v0.3.1-beta.2](docs/releases/v0.3.1-beta.2.md) añade anotaciones de comportamiento a las nueve herramientas MCP. Para probarla, activa las versiones beta en HACS y selecciona esta versión.
 
 ### Elige cómo accede Home Assistant a tu bóveda
 
