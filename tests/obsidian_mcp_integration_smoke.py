@@ -104,10 +104,29 @@ async def smoke(config, port):
                 **auth, "Origin": "https://example.org"
             }))[0] == 403
             status, reply = await request(client, endpoint, "tools/list", {}, auth)
-            assert status == 200 and {tool["name"] for tool in reply["result"]["tools"]} == {
-                "list_notes", "search_notes", "read_note", "read_note_with_revision",
-                "note_revision", "write_note", "append_note", "rename_note", "delete_note",
-            }, reply
+            assert status == 200 and "result" in reply, reply
+            expected_hints = {
+                "list_notes": (True, False, True),
+                "search_notes": (True, False, True),
+                "read_note": (True, False, True),
+                "read_note_with_revision": (True, False, True),
+                "note_revision": (True, False, True),
+                "write_note": (False, True, False),
+                "append_note": (False, False, False),
+                "rename_note": (False, True, True),
+                "delete_note": (False, True, True),
+            }
+            tools = reply["result"]["tools"]
+            assert len(tools) == len(expected_hints), tools
+            assert {tool["name"] for tool in tools} == expected_hints.keys(), tools
+            for tool in tools:
+                assert "inputSchema" in tool, tool
+                read_only, destructive, idempotent = expected_hints[tool["name"]]
+                hints = tool.get("annotations", {})
+                assert hints.get("readOnlyHint") is read_only, tool
+                assert hints.get("destructiveHint") is destructive, tool
+                assert hints.get("idempotentHint") is idempotent, tool
+                assert hints.get("openWorldHint") is False, tool
 
             written = await call_tool(
                 client, endpoint, "write_note", {"name": "Example.md", "content": "# Example"}, auth

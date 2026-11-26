@@ -4,7 +4,9 @@
 
 ## English
 
-Read, search and edit Markdown notes in your Obsidian vault from ChatGPT or another compatible MCP client. The integration runs in Home Assistant Core. The current release is **v0.3.0**.
+Read, search and edit Markdown notes in your Obsidian vault from ChatGPT or another compatible MCP client. The integration runs in Home Assistant Core. The current stable release is **v0.3.1**.
+
+[Release notes for v0.3.1](docs/releases/v0.3.1.md) describe the annotations now available for all nine MCP tools.
 
 ### Choose how Home Assistant sees your vault
 
@@ -28,7 +30,7 @@ A folder on your phone or PC is only usable in local mode if Home Assistant can 
 
 1. Set up CouchDB and verify that Self-hosted LiveSync works in Obsidian. On Home Assistant OS you can use a separate app such as [Obsidian Sync Server SSL](https://github.com/alexbelgium/hassio-addons/tree/master/obsidian_syncserver_ssl). Use a certificate trusted by Home Assistant Core and a CouchDB account with enough rights to replicate the target database.
 2. Obtain a **LiveSync CLI settings JSON** for that database. Reuse a working CLI configuration or follow the [upstream CLI setup guide](https://github.com/vrtmrz/obsidian-livesync/tree/1.0.39/src/apps/cli) to prepare one from the setup information of your Obsidian client. In **Configure → Import LiveSync settings**, paste the JSON. The form accepts CLI JSON, saves it to `/config/obsidian_mcp/settings/livesync-operativo.json` and protects an existing file from overwrite. Keep the JSON and any setup URI private, especially when the vault uses encryption or path obfuscation.
-3. Download `livesync-ha-amd64.tar.gz` (x86-64) or `livesync-ha-arm64.tar.gz` (AArch64) and the matching `.sha256` from the [release](https://github.com/sergey08/obsidian-mcp-integration/releases/tag/v0.3.0). These bundles target Alpine-based Home Assistant Core. The integration expects `/config/obsidian_mcp/bin/livesync-cli`. On a different platform, provision a compatible LiveSync CLI wrapper with the same path, arguments and `LIVESYNC_DB_PATH` environment variable.
+3. Download `livesync-ha-amd64.tar.gz` (x86-64) or `livesync-ha-arm64.tar.gz` (AArch64) and the matching `.sha256` from the [release](https://github.com/sergey08/obsidian-mcp-integration/releases/tag/v0.3.1). These bundles target Alpine-based Home Assistant Core. The integration expects `/config/obsidian_mcp/bin/livesync-cli`. On a different platform, provision a compatible LiveSync CLI wrapper with the same path, arguments and `LIVESYNC_DB_PATH` environment variable.
 4. From a shell with write access to the Home Assistant configuration directory, verify and extract the downloaded archive. For AMD64, from the folder holding the two downloads:
 
    ```sh
@@ -66,7 +68,9 @@ If a note fails to sync, confirm the active vault path and LiveSync status, chec
 
 ## Español
 
-Lee, busca y edita notas Markdown de tu bóveda de Obsidian desde ChatGPT u otro cliente MCP compatible. La integración se ejecuta dentro de Home Assistant Core. La versión actual es **v0.3.0**.
+Lee, busca y edita notas Markdown de tu bóveda de Obsidian desde ChatGPT u otro cliente MCP compatible. La integración se ejecuta dentro de Home Assistant Core. La versión estable actual es **v0.3.1**.
+
+Las [notas de v0.3.1](docs/releases/v0.3.1.md) describen las anotaciones disponibles para las nueve herramientas MCP.
 
 ### Elige cómo accede Home Assistant a tu bóveda
 
@@ -90,7 +94,7 @@ Una carpeta del móvil o del PC solo sirve en modo local si Home Assistant puede
 
 1. Configura CouchDB y comprueba que Self-hosted LiveSync funciona en Obsidian. En Home Assistant OS puedes usar una aplicación aparte como [Obsidian Sync Server SSL](https://github.com/alexbelgium/hassio-addons/tree/master/obsidian_syncserver_ssl). Usa un certificado que Home Assistant Core pueda validar y una cuenta de CouchDB con permisos para replicar la base de datos.
 2. Consigue el **JSON de configuración de LiveSync CLI** para esa base de datos. Reutiliza una configuración funcional o sigue la [guía del CLI oficial](https://github.com/vrtmrz/obsidian-livesync/tree/1.0.39/src/apps/cli) para prepararla a partir de la configuración de tu cliente Obsidian. Pega el JSON en **Configurar → Importar ajustes de LiveSync**. El formulario guarda el JSON del CLI en `/config/obsidian_mcp/settings/livesync-operativo.json` y protege el archivo existente frente a sobrescrituras. Mantén en privado el JSON y cualquier URI de configuración, especialmente si la bóveda usa cifrado u ofuscación de rutas.
-3. Descarga `livesync-ha-amd64.tar.gz` (x86-64) o `livesync-ha-arm64.tar.gz` (AArch64) y su `.sha256` de la [release](https://github.com/sergey08/obsidian-mcp-integration/releases/tag/v0.3.0). Los paquetes son para Home Assistant Core sobre Alpine. La integración busca `/config/obsidian_mcp/bin/livesync-cli`. En otra plataforma, prepara un lanzador LiveSync CLI compatible con esa misma ruta, los argumentos y la variable `LIVESYNC_DB_PATH`.
+3. Descarga `livesync-ha-amd64.tar.gz` (x86-64) o `livesync-ha-arm64.tar.gz` (AArch64) y su `.sha256` de la [release](https://github.com/sergey08/obsidian-mcp-integration/releases/tag/v0.3.1). Los paquetes son para Home Assistant Core sobre Alpine. La integración busca `/config/obsidian_mcp/bin/livesync-cli`. En otra plataforma, prepara un lanzador LiveSync CLI compatible con esa misma ruta, los argumentos y la variable `LIVESYNC_DB_PATH`.
 4. Desde un terminal con acceso de escritura al directorio de configuración, verifica el hash y extrae el paquete. En AMD64, desde la carpeta donde guardaste las dos descargas:
 
    ```sh

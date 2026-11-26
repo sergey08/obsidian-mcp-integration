@@ -9,6 +9,9 @@ import hashlib
 import threading
 import fcntl
 from contextlib import contextmanager
+
+from mcp.types import ToolAnnotations
+
 try:
     from mcp.server.mcpserver import MCPServer
 except ModuleNotFoundError as err:
@@ -29,13 +32,26 @@ def create_app(root: Path, trash: Path):
     else:
         mcp = MCPServer("Obsidian HA", subscriptions=False)
 
-    def tool(func):
-        @wraps(func)
-        async def run_in_worker(*args, **kwargs):
-            return await asyncio.to_thread(func, *args, **kwargs)
+    def tool(*, read_only: bool = False, destructive: bool, idempotent: bool):
+        annotations = ToolAnnotations(
+            readOnlyHint=read_only,
+            destructiveHint=destructive,
+            idempotentHint=idempotent,
+            openWorldHint=False,
+        )
 
-        mcp.tool()(run_in_worker)
-        return func
+        def register(func):
+            @wraps(func)
+            async def run_in_worker(*args, **kwargs):
+                return await asyncio.to_thread(func, *args, **kwargs)
+
+            mcp.tool(annotations=annotations)(run_in_worker)
+            return func
+
+        return register
+
+    # Tools act on the local vault, including when LiveSync syncs it separately.
+    read_tool = tool(read_only=True, destructive=False, idempotent=True)
 
     @contextmanager
     def vault_write_lock():
@@ -76,7 +92,7 @@ def create_app(root: Path, trash: Path):
         return dest
 
 
-    @tool
+    @read_tool
     def list_notes() -> list[str]:
         """List Markdown notes in the Obsidian vault."""
         return sorted(
@@ -87,7 +103,7 @@ def create_app(root: Path, trash: Path):
         )
 
 
-    @tool
+    @read_tool
     def search_notes(text: str, max_results: int = 30) -> list[dict]:
         """Search note contents and return matching line excerpts."""
         if not text or len(text) > 200:
@@ -103,13 +119,13 @@ def create_app(root: Path, trash: Path):
         return found
 
 
-    @tool
+    @read_tool
     def read_note(name: str) -> str:
         """Read the complete contents of a Markdown note."""
         return note_path(name, True).read_text(encoding="utf-8")
 
 
-    @tool
+    @read_tool
     def read_note_with_revision(name: str) -> dict:
         """Read a note with its SHA-256 revision. Pass sha256 as expected_sha256 when editing."""
         with vault_write_lock():
@@ -118,7 +134,7 @@ def create_app(root: Path, trash: Path):
                     "sha256": hashlib.sha256(content).hexdigest()}
 
 
-    @tool
+    @read_tool
     def note_revision(name: str) -> str:
         """Return SHA-256 of a note for safe optimistic updates."""
         return hashlib.sha256(note_path(name, True).read_bytes()).hexdigest()
@@ -131,7 +147,7 @@ def create_app(root: Path, trash: Path):
             raise RuntimeError("Note changed since it was read; refusing modification")
 
 
-    @tool
+    @tool(destructive=True, idempotent=False)
     def write_note(name: str, content: str, overwrite: bool = False, expected_sha256: str = "") -> str:
         """Create a Markdown note. Replacing an existing note requires overwrite=True."""
         with vault_write_lock():
@@ -161,7 +177,7 @@ def create_app(root: Path, trash: Path):
             return f"Saved: {name}"
 
 
-    @tool
+    @tool(destructive=False, idempotent=False)
     def append_note(name: str, content: str, expected_sha256: str = "") -> str:
         """Append content to an existing Markdown note."""
         with vault_write_lock():
@@ -172,7 +188,7 @@ def create_app(root: Path, trash: Path):
             return f"Updated: {name}"
 
 
-    @tool
+    @tool(destructive=True, idempotent=True)
     def rename_note(source: str, destination: str, expected_sha256: str = "") -> str:
         """Move or rename a note without overwriting an existing destination."""
         with vault_write_lock():
@@ -185,7 +201,7 @@ def create_app(root: Path, trash: Path):
             return f"Moved: {source} -> {destination}"
 
 
-    @tool
+    @tool(destructive=True, idempotent=True)
     def delete_note(name: str, expected_sha256: str = "") -> str:
         """Move a note to private recoverable trash instead of permanently deleting it."""
         with vault_write_lock():
